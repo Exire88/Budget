@@ -62,3 +62,4 @@ OPPDATERING
 -----------
 Får du en ny versjon av filene, laster du dem opp i samme repository
 på GitHub. Appen henter oppdateringen neste gang den åpnes med nett.
+
