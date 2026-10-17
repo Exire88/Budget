@@ -1,0 +1,1054 @@
+<!doctype html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Hvor gikk pengene?</title>
+<meta name="theme-color" content="#123B57">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Pengene">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Schibsted+Grotesk:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: kontoutskrift som regnskapsbok. Fjordblått bånd med totalsummen, deretter kategoriliste, søyler per måned, butikker og transaksjoner. To kolonner fra 960px. */
+:root{
+  --paper:#EDF1F0; --sheet:#FAFBFA; --ink:#10202A; --ink-2:#44545D; --ink-3:#637178; --rule:#D8E0E0;
+  --fjord:#1D5C86; --fjord-soft:#DCE8F0;
+  --band:#123B57; --band-ink:#EEF4F7; --band-ink-2:#A9C3D4; --band-line:rgba(238,244,247,.22);
+  --moss:#1E7148; --flag:#8F520A; --flag-soft:#F6E8D2;
+  --scrim:rgba(8,18,24,.45);
+  --f-display:"Schibsted Grotesk","Helvetica Neue",Arial,sans-serif;
+  --f-body:"Schibsted Grotesk",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-data:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0D1418; --sheet:#131E24; --ink:#E5ECEE; --ink-2:#AAB6BC; --ink-3:#869399; --rule:#24333B;
+    --fjord:#6BA9D7; --fjord-soft:#1A3243;
+    --band:#15344A; --band-ink:#EAF2F6; --band-ink-2:#9FB9C9; --band-line:rgba(234,242,246,.2);
+    --moss:#55C48E; --flag:#E5A552; --flag-soft:#3A2A14; --scrim:rgba(0,0,0,.6);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0D1418; --sheet:#131E24; --ink:#E5ECEE; --ink-2:#AAB6BC; --ink-3:#869399; --rule:#24333B;
+  --fjord:#6BA9D7; --fjord-soft:#1A3243;
+  --band:#15344A; --band-ink:#EAF2F6; --band-ink-2:#9FB9C9; --band-line:rgba(234,242,246,.2);
+  --moss:#55C48E; --flag:#E5A552; --flag-soft:#3A2A14; --scrim:rgba(0,0,0,.6);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font:15px/1.45 var(--f-body);-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--band)}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--fjord);outline-offset:2px}
+.band :focus-visible{outline-color:var(--band-ink)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.wrap{max-width:1120px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+/* Bånd */
+.band{background:var(--band);color:var(--band-ink)}
+.band .wrap{padding-block:22px 30px;display:grid;gap:22px}
+.top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 16px}
+.brand{margin:0;font:800 21px/1.1 var(--f-display);letter-spacing:-.01em}
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+.btn{appearance:none;display:inline-flex;align-items:center;gap:8px;border:1px solid transparent;border-radius:999px;padding:10px 16px;font:600 14px/1 var(--f-body);cursor:pointer;text-decoration:none;white-space:nowrap}
+.btn-primary{background:var(--band-ink);color:var(--band)}
+.btn-primary:hover{filter:brightness(.94)}
+.btn-ghost{background:transparent;color:var(--band-ink);border-color:var(--band-line)}
+.btn-ghost:hover{background:rgba(255,255,255,.07)}
+.btn svg{width:16px;height:16px;flex:none}
+.notice{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;font-size:14px;color:var(--band-ink-2)}
+.pill{font:600 11px/1 var(--f-data);letter-spacing:.09em;text-transform:uppercase;padding:5px 8px;border-radius:4px;border:1px solid var(--band-line);color:var(--band-ink)}
+.notice.err{color:var(--band-ink)}
+.notice.err .pill{background:var(--flag);border-color:var(--flag);color:var(--band)}
+.hero{display:grid;gap:12px}
+.eyebrow{margin:0;font:500 12px/1.4 var(--f-data);letter-spacing:.07em;text-transform:uppercase;color:var(--band-ink-2)}
+.eyebrow button{all:unset;cursor:pointer;margin-left:8px;padding:2px 8px;border:1px solid var(--band-line);border-radius:999px;color:var(--band-ink);letter-spacing:.04em}
+.eyebrow button:focus-visible{outline:2px solid var(--band-ink)}
+.total{margin:0;font:800 clamp(46px,12vw,84px)/.95 var(--f-display);letter-spacing:-.035em;display:flex;align-items:flex-start;gap:.12em;flex-wrap:wrap}
+.total .cur{font:500 .3em/1.4 var(--f-data);letter-spacing:0;color:var(--band-ink-2);padding-top:.25em}
+.total-sub{margin:0;font-size:16px;color:var(--band-ink-2)}
+.stats{display:flex;flex-wrap:wrap;gap:10px 28px;margin:6px 0 0;padding:14px 0 0;border-top:1px solid var(--band-line)}
+.stats div{display:grid;gap:2px}
+.stats dt{font:500 11px/1.2 var(--f-data);letter-spacing:.08em;text-transform:uppercase;color:var(--band-ink-2)}
+.stats dd{margin:0;font:600 17px/1.2 var(--f-body)}
+.stats dd.in{color:var(--band-ink)}
+.stats button{all:unset;cursor:pointer;border-bottom:1px solid var(--band-line)}
+.stats button:focus-visible{outline:2px solid var(--band-ink)}
+.how{font-size:14px;color:var(--band-ink-2);max-width:68ch}
+.how summary{cursor:pointer;color:var(--band-ink);font-weight:600;width:fit-content}
+.how ol{margin:10px 0 6px;padding-left:20px;display:grid;gap:4px}
+.how p{margin:6px 0 0}
+
+/* Hoveddel */
+.main .wrap{padding-block:22px 56px}
+.grid{display:grid;gap:18px;grid-template-columns:minmax(0,1fr)}
+.col{display:grid;gap:18px;align-content:start;min-width:0}
+@media (min-width:960px){.grid{grid-template-columns:minmax(0,5fr) minmax(0,7fr)}}
+.panel{background:var(--sheet);border:1px solid var(--rule);border-radius:var(--r);padding:16px 16px 18px;min-width:0}
+.ph{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:4px 12px;margin:0 0 12px}
+.ph h2{margin:0;font:700 12.5px/1.2 var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2)}
+.ph .meta{font:12px/1.3 var(--f-data);color:var(--ink-3)}
+.empty{margin:4px 0;color:var(--ink-3);font-size:14px}
+
+/* Kategorier */
+.cats{display:grid;gap:2px}
+.cat{appearance:none;border:0;background:none;text-align:left;width:100%;cursor:pointer;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:5px 12px;padding:10px 8px;border-radius:8px;transition:background .12s,opacity .12s}
+.cat:hover,.cat.on{background:var(--fjord-soft)}
+.cats.has-on .cat:not(.on){opacity:.5}
+.cat-name{font-weight:600;min-width:0;overflow-wrap:anywhere}
+.cat-amt{font:500 14px/1.45 var(--f-data);font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.cat-bar{grid-column:1/-1;height:6px;border-radius:3px;background:var(--rule);overflow:hidden}
+.cat-bar i{display:block;height:100%;min-width:2px;background:var(--fjord);border-radius:3px}
+.cat-meta{grid-column:1/-1;font-size:12.5px;color:var(--ink-3)}
+.cat.flag .cat-name::after{content:"Ikke sortert";margin-left:8px;font:600 10.5px/1 var(--f-data);letter-spacing:.06em;text-transform:uppercase;padding:3px 6px;border-radius:4px;background:var(--flag-soft);color:var(--flag);vertical-align:2px}
+.cat.flag .cat-meta{color:var(--flag)}
+.cat.muted .cat-bar i{background:var(--ink-3)}
+.subhead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;margin:14px 0 4px;padding:12px 8px 0;border-top:1px solid var(--rule);font-size:13px;color:var(--ink-2)}
+.check{display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--ink-2)}
+.check input{width:16px;height:16px;accent-color:var(--fjord);margin:0}
+
+/* Diagram */
+.chart{position:relative;min-height:210px}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.chart .gl{stroke:var(--rule);stroke-width:1}
+.chart .base{stroke:var(--ink-3);stroke-width:1;opacity:.6}
+.chart .tl{fill:var(--ink-3);font:11px var(--f-data)}
+.chart .xl{fill:var(--ink-2);font:500 11.5px var(--f-data)}
+.chart .vl{fill:var(--ink);font:600 11.5px var(--f-data)}
+.chart .bar{fill:var(--fjord);transition:opacity .12s}
+.chart .bar.dim{opacity:.32}
+.chart .bar.hov{opacity:.85}
+.chart .hit{fill:transparent;cursor:pointer}
+.chart .xl.on{fill:var(--ink);font-weight:700}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--sheet);font-size:12.5px;line-height:1.35;padding:8px 10px;border-radius:6px;white-space:nowrap;z-index:2;box-shadow:0 4px 14px rgba(0,0,0,.18)}
+.tip b{font-weight:700}
+.tip .n{font-family:var(--f-data)}
+.tip .p{opacity:.75}
+.hint{margin:8px 0 0;font-size:12.5px;color:var(--ink-3)}
+
+/* Butikker */
+.merch{display:grid}
+.mrow{appearance:none;border:0;background:none;width:100%;text-align:left;cursor:pointer;display:grid;grid-template-columns:1.6em minmax(0,1fr) auto;gap:2px 10px;align-items:baseline;padding:9px 0;border-top:1px solid var(--rule)}
+.mrow:first-child{border-top:0}
+.mrow:hover .m-name{color:var(--fjord)}
+.m-rank{font:12px var(--f-data);color:var(--ink-3)}
+.m-name{font-weight:600;min-width:0;overflow-wrap:anywhere}
+.m-amt{font:500 14px var(--f-data);font-variant-numeric:tabular-nums;white-space:nowrap}
+.m-sub{grid-column:2/-1;font-size:12.5px;color:var(--ink-3)}
+
+/* Transaksjoner */
+.tools{display:grid;gap:10px;margin-bottom:6px}
+.search{width:100%;padding:10px 12px;border:1px solid var(--rule);border-radius:8px;background:var(--paper);font-size:15px}
+.search::placeholder{color:var(--ink-3)}
+.filters{display:flex;flex-wrap:wrap;gap:6px}
+.fchip{appearance:none;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--fjord);background:var(--fjord-soft);color:var(--ink);border-radius:999px;padding:4px 6px 4px 10px;font:500 13px/1.2 var(--f-body);cursor:pointer}
+.fchip span{font:600 14px/1 var(--f-data);color:var(--ink-2);padding:0 4px}
+.txs{display:grid}
+.tx{display:grid;grid-template-columns:3.4em minmax(0,1fr) auto;gap:3px 10px;padding:11px 0;border-top:1px solid var(--rule);align-items:baseline}
+.tx-date{font:12px/1.5 var(--f-data);color:var(--ink-3);font-variant-numeric:tabular-nums}
+.tx-main{min-width:0}
+.tx-merch{font-weight:600;overflow-wrap:anywhere}
+.tx-raw{font-size:12px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tx-amt{font:500 14px/1.5 var(--f-data);font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.tx-amt.pos{color:var(--moss)}
+.tx .chip{grid-column:2/-1;justify-self:start}
+.chip{appearance:none;border:1px solid var(--rule);background:var(--paper);color:var(--ink-2);border-radius:999px;padding:3px 10px;font:500 12.5px/1.3 var(--f-body);cursor:pointer}
+.chip:hover{border-color:var(--fjord);color:var(--ink)}
+.chip.flag{border-color:var(--flag);color:var(--flag);background:var(--flag-soft)}
+.more{appearance:none;margin-top:10px;width:100%;padding:10px;border:1px solid var(--rule);border-radius:8px;background:var(--paper);cursor:pointer;font-weight:600;color:var(--ink-2)}
+.more:hover{border-color:var(--fjord);color:var(--ink)}
+
+/* Fil og regler */
+.settings{display:grid;gap:14px}
+.settings details summary{cursor:pointer;font-weight:600;color:var(--ink)}
+.settings details[open] summary{margin-bottom:12px}
+.fileinfo{font-size:13.5px;color:var(--ink-2);margin:0}
+.fileinfo b{color:var(--ink);font-weight:600;overflow-wrap:anywhere}
+.fields{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr))}
+.field{display:grid;gap:4px;min-width:0}
+.field label{font:500 11px/1.2 var(--f-data);letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3)}
+.field select{width:100%;padding:8px 10px;border:1px solid var(--rule);border-radius:8px;background:var(--paper);font-size:14px}
+.modes{display:flex;flex-wrap:wrap;gap:6px 16px;margin:12px 0 10px}
+.preview{margin-top:12px;overflow-x:auto;border:1px solid var(--rule);border-radius:8px}
+.preview table{border-collapse:collapse;font:12px/1.4 var(--f-data);width:100%;min-width:420px}
+.preview th,.preview td{padding:6px 8px;border-top:1px solid var(--rule);text-align:left;white-space:nowrap}
+.preview th{border-top:0;color:var(--ink-3);font-weight:500;text-transform:uppercase;letter-spacing:.05em;font-size:10.5px}
+.preview td.n{text-align:right;font-variant-numeric:tabular-nums}
+.rules{display:grid;gap:6px;margin:0;padding:0;list-style:none}
+.rules li{display:flex;align-items:center;gap:10px;justify-content:space-between;padding:8px 10px;border:1px solid var(--rule);border-radius:8px;font-size:13.5px}
+.rules li span{min-width:0;overflow-wrap:anywhere}
+.rules code{font:500 12.5px var(--f-data)}
+.linkbtn{appearance:none;border:0;background:none;padding:2px 4px;cursor:pointer;color:var(--fjord);font-weight:600;font-size:13px;white-space:nowrap}
+.privacy{margin:0;font-size:12.5px;color:var(--ink-3)}
+
+/* Ark for å flytte kategori */
+.backdrop{position:fixed;inset:0;background:var(--scrim);z-index:40}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:41;background:var(--sheet);color:var(--ink);border-radius:16px 16px 0 0;max-height:88vh;overflow:auto;padding:18px max(16px,env(safe-area-inset-right,0px)) calc(18px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));box-shadow:0 -10px 34px rgba(0,0,0,.22)}
+@media (min-width:640px){.sheet{left:50%;right:auto;width:560px;transform:translateX(-50%);bottom:24px;border-radius:16px}}
+.sheet h3{margin:0;font:700 18px/1.25 var(--f-display);overflow-wrap:anywhere}
+.sheet .raw{margin:4px 0 0;font:12px/1.4 var(--f-data);color:var(--ink-3);overflow-wrap:anywhere}
+.sheet .amt{margin:6px 0 14px;font:600 15px var(--f-data)}
+.opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.opt{appearance:none;padding:10px;border:1px solid var(--rule);border-radius:8px;background:var(--paper);text-align:left;font:500 13.5px/1.25 var(--f-body);cursor:pointer;min-width:0;overflow-wrap:anywhere}
+.opt:hover{border-color:var(--fjord)}
+.opt.on{border-color:var(--fjord);background:var(--fjord-soft);font-weight:700}
+.applyall{margin-top:14px;padding:12px;border:1px solid var(--rule);border-radius:8px;display:grid;gap:8px}
+.applyall input[type=text]{width:100%;padding:8px 10px;border:1px solid var(--rule);border-radius:8px;background:var(--paper);font:500 14px var(--f-data);text-transform:uppercase}
+.applyall .cnt{font-size:12.5px;color:var(--ink-3)}
+.sheet-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+.sbtn{appearance:none;border:1px solid var(--rule);background:var(--paper);border-radius:999px;padding:10px 18px;font-weight:600;cursor:pointer}
+.sbtn.primary{background:var(--fjord);border-color:var(--fjord);color:var(--sheet)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:50;background:var(--ink);color:var(--sheet);padding:10px 16px;border-radius:999px;font-size:14px;font-weight:500;box-shadow:0 6px 20px rgba(0,0,0,.2);max-width:calc(100% - 32px);text-align:center}
+.drop{position:fixed;inset:0;z-index:60;background:var(--scrim);display:grid;place-items:center;color:#fff;font:700 22px var(--f-display)}
+.drop div{border:2px solid rgba(255,255,255,.7);border-radius:16px;padding:28px 36px;background:rgba(18,59,87,.8)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<header class="band">
+  <div class="wrap">
+    <div class="top">
+      <h1 class="brand">Hvor gikk pengene?</h1>
+      <div class="actions">
+        <input class="sr" type="file" id="file" accept=".csv,.txt,.tsv,.xlsx,.xls,.xlsm,.ods,text/csv">
+        <label class="btn btn-primary" for="file">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M8 10.5V2.5M4.5 6 8 2.5 11.5 6M2.5 10.5v2.5h11v-2.5"/></svg>
+          Last inn kontoutskrift
+        </label>
+        <button class="btn btn-ghost" id="sampleBtn" type="button" hidden>Vis eksempel</button>
+        <button class="btn btn-ghost" id="installBtn" type="button" hidden>Installer appen</button>
+      </div>
+    </div>
+    <div class="notice" id="notice"></div>
+    <section class="hero" aria-live="polite">
+      <p class="eyebrow" id="eyebrow"></p>
+      <p class="total" id="total"><span class="cur">kr</span><span id="totalNum">0</span></p>
+      <p class="total-sub" id="totalSub"></p>
+      <dl class="stats" id="stats"></dl>
+    </section>
+    <details class="how" id="how">
+      <summary>Sånn eksporterer du fra nettbanken</summary>
+      <ol>
+        <li>Logg inn i nettbanken. Det er ofte enklest på PC eller nettbrett.</li>
+        <li>Åpne kontoen du bruker til kort og regninger, og velg perioden du vil se på, for eksempel de siste tre månedene.</li>
+        <li>Velg Eksporter eller Last ned, og lagre som CSV eller Excel.</li>
+        <li>Trykk «Last inn kontoutskrift» her og velg filen. På PC kan du også dra filen inn i vinduet.</li>
+      </ol>
+      <p>Appen er laget for vanlige CSV- og Excel-eksporter fra norske banker. Hvis noe ser feil ut, kan du velge kolonnene selv under «Fil og kolonner».</p>
+    </details>
+    <details class="how" id="howInstall">
+      <summary>Legg appen på telefonen eller PC-en</summary>
+      <ol>
+        <li>iPhone: åpne siden i Safari, trykk Del-knappen og velg «Legg til på Hjem-skjerm».</li>
+        <li>Android: åpne siden i Chrome, trykk menyen ⋮ og velg «Installer app» eller «Legg til på startsiden».</li>
+        <li>PC: åpne siden i Edge eller Chrome og trykk «Installer appen» øverst, eller installasjonsikonet i adressefeltet.</li>
+      </ol>
+      <p>Når appen er installert, virker den uten nett. Åpne den én gang med nett først, så blir alt lagret på enheten.</p>
+    </details>
+  </div>
+</header>
+
+<main class="main">
+  <div class="wrap grid">
+    <div class="col">
+      <section class="panel" aria-labelledby="catH">
+        <div class="ph"><h2 id="catH">Kategorier</h2><span class="meta" id="catMeta"></span></div>
+        <div class="cats" id="cats"></div>
+        <div id="nonSpend"></div>
+      </section>
+      <section class="panel settings" aria-labelledby="setH">
+        <div class="ph"><h2 id="setH">Fil og kolonner</h2></div>
+        <p class="fileinfo" id="fileInfo"></p>
+        <details id="mapDetails">
+          <summary>Velg kolonner selv</summary>
+          <div class="modes" role="radiogroup" aria-label="Hvordan beløpet står i filen">
+            <label class="check"><input type="radio" name="mode" id="modeSingle" value="single"> Ett beløp med fortegn</label>
+            <label class="check"><input type="radio" name="mode" id="modeSplit" value="split"> Egne kolonner for ut og inn</label>
+          </div>
+          <div class="fields">
+            <div class="field"><label for="mapDate">Dato</label><select id="mapDate"></select></div>
+            <div class="field"><label for="mapText">Tekst</label><select id="mapText"></select></div>
+            <div class="field" id="fAmt"><label for="mapAmt">Beløp</label><select id="mapAmt"></select></div>
+            <div class="field" id="fOut"><label for="mapOut">Ut</label><select id="mapOut"></select></div>
+            <div class="field" id="fIn"><label for="mapIn">Inn</label><select id="mapIn"></select></div>
+          </div>
+          <p style="margin:12px 0 0"><label class="check"><input type="checkbox" id="mapFlip"> Utgifter står som positive tall (snu fortegnet)</label></p>
+          <div class="preview" id="preview"></div>
+        </details>
+        <details id="rulesDetails">
+          <summary id="rulesSum">Egne regler</summary>
+          <ul class="rules" id="rules"></ul>
+        </details>
+        <p class="privacy">Filen leses bare her i nettleseren og sendes ikke noe sted. Egne regler for kategorier lagres i denne nettleseren.</p>
+      </section>
+    </div>
+    <div class="col">
+      <section class="panel" aria-labelledby="chartH">
+        <div class="ph"><h2 id="chartH">Forbruk per måned</h2><span class="meta" id="chartMeta"></span></div>
+        <div class="chart" id="chart"></div>
+        <p class="hint" id="chartHint">Trykk på en søyle for å se bare den perioden.</p>
+      </section>
+      <section class="panel" aria-labelledby="merchH">
+        <div class="ph"><h2 id="merchH">Der du bruker mest</h2><span class="meta" id="merchMeta"></span></div>
+        <div class="merch" id="merch"></div>
+      </section>
+      <section class="panel" aria-labelledby="txH">
+        <div class="ph"><h2 id="txH">Transaksjoner</h2><span class="meta" id="txMeta"></span></div>
+        <div class="tools">
+          <label class="sr" for="q">Søk i transaksjoner</label>
+          <input class="search" id="q" type="search" placeholder="Søk etter butikk eller tekst" autocomplete="off">
+          <div class="filters" id="filters"></div>
+        </div>
+        <div class="txs" id="txs"></div>
+        <button class="more" id="more" type="button" hidden></button>
+      </section>
+    </div>
+  </div>
+</main>
+
+<div class="backdrop" id="backdrop" hidden></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle" hidden>
+  <h3 id="sheetTitle"></h3>
+  <p class="raw" id="sheetRaw"></p>
+  <p class="amt" id="sheetAmt"></p>
+  <div class="opts" id="opts"></div>
+  <div class="applyall">
+    <label class="check"><input type="checkbox" id="allChk" checked> Gjør det samme for alle som inneholder</label>
+    <label class="sr" for="allKw">Tekst som skal gjenkjennes</label>
+    <input type="text" id="allKw" autocomplete="off" spellcheck="false">
+    <span class="cnt" id="allCnt"></span>
+  </div>
+  <div class="sheet-actions">
+    <button class="sbtn" id="sheetCancel" type="button">Avbryt</button>
+    <button class="sbtn primary" id="sheetSave" type="button">Lagre</button>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+<div class="drop" id="drop" hidden><div>Slipp filen her</div></div>
+
+<script>
+/*CORE-START*/
+const CATS=[
+  {id:'dagligvarer',name:'Dagligvarer'},
+  {id:'matute',name:'Mat ute og uteliv'},
+  {id:'bolig',name:'Bolig og strøm'},
+  {id:'transport',name:'Transport og bil'},
+  {id:'reise',name:'Reise og ferie'},
+  {id:'abonnement',name:'Abonnementer og strømming'},
+  {id:'mobil',name:'Mobil og internett'},
+  {id:'forsikring',name:'Forsikring'},
+  {id:'klaer',name:'Klær, sko og sport'},
+  {id:'shopping',name:'Shopping og netthandel'},
+  {id:'hjem',name:'Hjem, bygg og elektronikk'},
+  {id:'helse',name:'Helse og velvære'},
+  {id:'fritid',name:'Trening og fritid'},
+  {id:'barn',name:'Barn og familie'},
+  {id:'vipps',name:'Vipps til personer'},
+  {id:'kontanter',name:'Kontantuttak',posTo:'inntekt'},
+  {id:'gebyr',name:'Gebyrer og renter',posTo:'inntekt'},
+  {id:'skatt',name:'Skatt og offentlig',posTo:'inntekt'},
+  {id:'annet',name:'Annet'},
+  {id:'sparing',name:'Sparing og lån',nonSpend:true},
+  {id:'overforing',name:'Overføringer',nonSpend:true},
+  {id:'inntekt',name:'Inntekt',income:true,negTo:'annet'}
+];
+const CAT=Object.fromEntries(CATS.map(c=>[c.id,c]));
+
+/* Nøkkelord. Uten prefiks: butikk/merkenavn. ~ = generelt ord. ^ = reserve (brukes bare når ingenting annet passer). =Visningsnavn */
+const RULES={
+dagligvarer:`REMA 1000=Rema 1000|REMA=Rema 1000|KIWI|COOP EXTRA=Coop Extra|COOP MEGA=Coop Mega|COOP PRIX=Coop Prix|COOP OBS=Coop Obs|COOP MARKED=Coop Marked|COOP=Coop|OBS HYPERMARKED=Obs|OBS=Obs|EXTRA=Coop Extra|MEGA=Coop Mega|PRIX=Coop Prix|MENY|EUROSPAR=Eurospar|SPAR=Spar|JOKER|BUNNPRIS|NÆRBUTIKKEN|MATKROKEN|ODA=Oda|ODA.COM=Oda|KOLONIAL|FUDI|GIGABOKS|ICA=ICA|LIDL|NETTO|WILLYS|HEMKÖP|~DAGLIGVARE|~MATBUTIKK`,
+matute:`MCDONALDS=McDonald's|MC DONALDS=McDonald's|MCDONALD'S=McDonald's|BURGER KING|MAX BURGERS=Max Burgers|MAX HAMBURGERRESTAURANGER=Max Burgers|PEPPES PIZZA=Peppes Pizza|PEPPES=Peppes Pizza|DOLLY DIMPLES|DOMINOS=Domino's|DOMINO'S=Domino's|PIZZABAKEREN|EGON|ESPRESSO HOUSE|STARBUCKS|KAFFEBRENNERIET|WAYNES COFFEE|JOE & THE JUICE|BAKER HANSEN|W.B. SAMSON=W.B. Samson|GODT BRØD|FOODORA|WOLT|JUST EAT|UBER EATS|TOO GOOD TO GO|NARVESEN|7-ELEVEN=7-Eleven|7 ELEVEN=7-Eleven|DELI DE LUCA|MIX|SUBWAY|KFC=KFC|BURGERHEAVEN|VINMONOPOLET|POLET=Vinmonopolet|~RESTAURANT|~RESTAURANG|~RISTORANTE|~PIZZA|~PIZZERIA|~SUSHI|~KEBAB|~CAFE|~CAFÉ|~KAFE|~KAFÉ|~KAFFE|~COFFEE|~BAR|~PUB|~BURGER|~GRILL|~BISTRO|~TAKEAWAY|~BRYGGERI|~BAKERI|~BRASSERIE|~TAPAS|~RAMEN|~DINER|~KANTINE`,
+bolig:`~HUSLEIE|~FELLESKOST|~FELLESKOSTNADER|~BORETTSLAG|~SAMEIE|OBOS=OBOS|USBL=USBL|TIBBER|FJORDKRAFT|NORGESENERGI|FORTUM|HAFSLUND|ELVIA|TENSIO|LYSE|BKK=BKK|GLITRE|AGDER ENERGI|TRONDHEIM KRAFT|ISTAD|VERISURE|SECTOR ALARM|~STRØM|~STRØMREGNING|~NETTLEIE|~KOMMUNALE AVGIFTER|~EIENDOMSSKATT|~LEILIGHET`,
+transport:`RUTER|VY=Vy|ATB=AtB|SKYSS|KOLUMBUS|BRAKAR|NOR-WAY BUSSEKSPRESS=Nor-Way|FLYTOGET|ENTUR|GO-AHEAD|SJ NORGE=SJ|UBER|BOLT|NORGES TAXI|OSLO TAXI|VOI|RYDE|TIER|LIME|CIRCLE K|ESSO|SHELL|UNO-X|YX=YX|ST1=St1|EASYPARK|APCOA|ONEPARK|AIMO PARK|EUROPARK|FJELLINJEN|AUTOPASS|FERDE|VEGAMOT|SKYTTEL|MER NORWAY=Mer|MER LADING=Mer|RECHARGE|IONITY|TESLA|KOPLE|ELTON|MEKONOMEN|BILXTRA|VIANOR|DEKKMANN|STATENS VEGVESEN|FJORD1|BOREAL|TORGHATTEN|NORLED|~TAXI|~PARKERING|~PARKING|~BOMPENGER|~BOMPENGE|~LADING|~VERKSTED|~FERJE|~DRIVSTOFF|~BENSIN`,
+reise:`SAS=SAS|SCANDINAVIAN AIRLINES=SAS|NORWEGIAN AIR=Norwegian|NORWEGIAN|WIDERØE|WIDEROE=Widerøe|RYANAIR|KLM=KLM|LUFTHANSA|FINNAIR|AIRBNB|BOOKING.COM=Booking.com|HOTELS.COM=Hotels.com|EXPEDIA|SCANDIC|THON HOTEL=Thon Hotels|THON HOTELS|CLARION|COMFORT HOTEL|QUALITY HOTEL|STRAWBERRY|NORDIC CHOICE|RADISSON|BEST WESTERN|VING|TUI=TUI|APOLLO|HURTIGRUTEN|HAVILA|COLOR LINE|FJORD LINE|STENA LINE|DFDS=DFDS|AVINOR|~HOTEL|~HOTELL|~HOSTEL|~CAMPING|~REISEBYRÅ`,
+abonnement:`NETFLIX|SPOTIFY|HBO=HBO|MAX.COM=Max|HBOMAX=Max|VIAPLAY|DISNEY PLUS=Disney+|DISNEYPLUS=Disney+|DISNEY+=Disney+|TV 2 PLAY=TV 2 Play|TV2 PLAY=TV 2 Play|TV 2=TV 2|APPLE.COM/BILL=Apple|APPLE.COM=Apple|ITUNES=Apple|GOOGLE PLAY|GOOGLE ONE|GOOGLE|YOUTUBE|STORYTEL|BOOKBEAT|AUDIBLE|NEXTORY|PATREON|OPENAI=OpenAI|CHATGPT=ChatGPT|ANTHROPIC|CLAUDE.AI=Claude|ADOBE|MICROSOFT|MSFT=Microsoft|DROPBOX|PLAYSTATION|XBOX|NINTENDO|AMAZON PRIME|PRIME VIDEO|SKYSHOWTIME|STRIM|AFTENPOSTEN|VG+=VG+|DAGBLADET|DAGENS NÆRINGSLIV|SCHIBSTED|AMEDIA|STRAVA|TIDAL|DEEZER|~ABONNEMENT|~MEDLEMSKAP`,
+mobil:`TELENOR|TELIA|ICE=Ice|ICE.NET=Ice|TALKMORE|CHILI MOBIL|ONECALL|MYCALL|LYCAMOBILE|ALTIBOX|GLOBALCONNECT|NEXTGENTEL|GET=Get|ALLENTE|RIKSTV=RiksTV|SKYMOBIL|FJORDKRAFT MOBIL|PLUSS MOBIL|~MOBILABONNEMENT|~BREDBÅND`,
+forsikring:`GJENSIDIGE|IF SKADE=If|IF FORSIKRING=If|TRYG|FREMTIND|FRENDE|CODAN|EUROPEISKE|INSR=INSR|KLP SKADE=KLP|STOREBRAND FORSIKRING=Storebrand|~FORSIKRING|~FORSIKRINGSPREMIE`,
+klaer:`H&M=H&M|H & M=H&M|HM=H&M|ZARA|CUBUS|DRESSMANN|BIK BOK|CARLINGS|VOLT|KAPPAHL|LINDEX|NAME IT|ZALANDO|BOOZT|NELLY|ARKET|WEEKDAY|MANGO|UNIQLO|NIKE|ADIDAS|SKORINGEN|EUROSKO|NILSON SHOES|SKOPUNKTEN|DIN SKO|XXL=XXL|INTERSPORT|SPORT 1=Sport 1|SPORT1=Sport 1|ANTON SPORT|G-SPORT=G-Sport|MILSLUKER|BERGANS|NORRØNA|HELLY HANSEN|STORMBERG|JUNKYARD|GANT|MOODS OF NORWAY|JACK & JONES|VERO MODA|~SKOBUTIKK|~KLESBUTIKK`,
+shopping:`AMAZON|TEMU|SHEIN|ALIEXPRESS|WISH|EBAY|ETSY|NILLE|NORMAL|EUROPRIS|TILBUDSHUSET|SØSTRENE GRENE|RUSTA|PRINCESS|KREMMERHUSET|FLYING TIGER|ARK BOKHANDEL=Ark|ARK=Ark|NORLI|ADLIBRIS|CDON=CDON|PANDORA|GULLFUNN|THUNE|FINN.NO=Finn.no|TISE|VINTED|POSTEN|~BOKHANDEL|~GAVEBUTIKK`,
+hjem:`IKEA=IKEA|JYSK|SKEIDAR|BOHUS|FAGMØBLER|KID INTERIØR=Kid|HAGELAND|PLANTASJEN|ELKJØP|ELKJOP=Elkjøp|POWER|KOMPLETT|NETONNET|PROSHOP|KJELL & COMPANY|CLAS OHLSON|BILTEMA|JULA|OBS BYGG=Obs Bygg|COOP BYGGMIX=Coop Byggmix|MAXBO|BYGGMAX|MONTER|OPTIMERA|XL-BYGG=XL-Bygg|BYGGERN=Byggern|BYGGER'N=Byggern|JERNIA|FARGERIKE|FLÜGGER|FLUGGER=Flügger|KITCHN|TILBORDS|CHRISTIANIA GLASMAGASIN|APPLE STORE|BOLIA|ILVA|~INTERIØR|~JERNVARE|~BYGGEVARE|~MØBLER`,
+helse:`APOTEK 1=Apotek 1|APOTEK1=Apotek 1|VITUSAPOTEK|VITUS=Vitusapotek|BOOTS|DITT APOTEK|FARMASIET|SPECSAVERS|BRILLELAND|SYNSAM|INTEROPTIK|HELFO=Helfo|DR.DROPIN=Dr.Dropin|DR DROPIN=Dr.Dropin|CUTTERS|KICKS|LYKO|BLIVAKKER|NOTINO|~APOTEK|~LEGE|~LEGESENTER|~LEGEKONTOR|~LEGEVAKT|~TANNLEGE|~TANNHELSE|~TANNKLINIKK|~FYSIOTERAPI|~FYSIO|~KIROPRAKTOR|~OPTIKER|~SYKEHUS|~KLINIKK|~FRISØR|~FRISOR|~HUDPLEIE|~SPA|~MASSASJE|~PSYKOLOG|~HELSEKOST`,
+fritid:`SATS=SATS|EVO=EVO|ELIXIA|3T=3T|FRISKIS|STAMINA|ACTIC|NORDISK FILM|ODEON|TICKETMASTER|BILLETTSERVICE|TIKKIO|TICKETCO|EVENTIM|HOOPLA|STEAM|STEAMPOWERED=Steam|EPIC GAMES|HAFJELL|TRYSIL|SKISTAR|KVITFJELL|DNT=DNT|TUSENFRYD|~TRENINGSSENTER|~FITNESS|~GYM|~CROSSFIT|~KINO|~SKISENTER|~GOLF|~BOWLING|~MUSEUM|~BADELAND|~KLATRESENTER|~KONSERT|~TEATER`,
+barn:`LEKIA|BR LEKER=BR-Leker|BR-LEKER=BR-Leker|LEKEKASSEN|JOLLYROOM|BABYSHOP|~BARNEHAGE|~SFO|~AKS|~LEKETØY`,
+vipps:`^VIPPS|^MOBILEPAY`,
+overforing:`^OVERFØRING|^OVERFORING|^OVERF|^NETTBANK|^NETTBANK TIL|^NETTBANK FRA|^EGNE KONTI|^MELLOM EGNE KONTI|^STRAKSBETALING|^STRAKS|^TIL KONTO|^FRA KONTO`,
+sparing:`BSU=BSU|NORDNET|KRON|FIRI|LÅNEKASSEN=Lånekassen|STATENS LÅNEKASSE=Lånekassen|BANK NORWEGIAN|KOMPLETT BANK|~SPAREKONTO|~SPARING|~SPAREAVTALE|~MÅNEDSSPAR|~FONDSSPAR|~AKSJESPAREKONTO|~AVDRAG|~LÅN|~BOLIGLÅN|~TERMINBELØP|~KREDITTKORT`,
+kontanter:`~MINIBANK|~KONTANTUTTAK|~UTTAK|~ATM|~KONTANT`,
+gebyr:`~GEBYR|~KORTAVGIFT|~ÅRSAVGIFT|~ÅRSPRIS|~TERMINGEBYR|~VALUTAPÅSLAG|~PURREGEBYR|~RENTER|~DEBETRENTER|~KREDITRENTER|~OVERTREKKSRENTE|~INKASSO`,
+skatt:`SKATTEETATEN=Skatteetaten|SKATTEINNKREVING|SKATTEOPPKREVEREN|STATENS INNKREVINGSSENTRAL|POLITIET|BRØNNØYSUNDREGISTRENE|~KOMMUNE|~RESTSKATT|~FORSKUDDSSKATT|~SKATTEOPPGJØR`,
+inntekt:`NAV=NAV|~LØNN|~LONN|~FERIEPENGER|~BARNETRYGD|~UTBYTTE|~PENSJON|~STIPEND|~DAGPENGER|~SYKEPENGER|~LØNNSUTBETALING`
+};
+
+const LET='A-Z0-9ÆØÅÄÖÜÉ';
+const escRe=s=>s.replace(/[.*+?^${}()|[\]\\\/]/g,'\\$&');
+const norm=s=>String(s==null?'':s).toUpperCase().replace(/\s+/g,' ').trim();
+const SMALL=new Set(['og','i','på','av','til','fra','for','med','de','la','le','the','of']);
+function pretty(s){
+  return String(s).toLowerCase().split(' ').filter(Boolean).map((w,i)=>{
+    if(i>0&&SMALL.has(w))return w;
+    const letters=w.replace(/[^a-zæøåäöüé]/g,'');
+    if(letters.length&&letters.length<=3&&!/[aeiouyæøå]/.test(letters))return w.toUpperCase();
+    if(/^(as|asa|nuf|ab)$/.test(w))return w.toUpperCase();
+    return w.split('-').map(p=>p?p[0].toUpperCase()+p.slice(1):p).join('-');
+  }).join(' ');
+}
+const COMPILED=[];
+for(const [cat,str] of Object.entries(RULES)){
+  for(let raw of str.split('|')){
+    raw=raw.trim(); if(!raw) continue;
+    let tier=3;
+    if(raw[0]==='~'){tier=2;raw=raw.slice(1);} else if(raw[0]==='^'){tier=1;raw=raw.slice(1);}
+    const eq=raw.indexOf('=');
+    const kw=(eq>=0?raw.slice(0,eq):raw).trim();
+    const disp=eq>=0?raw.slice(eq+1).trim():null;
+    COMPILED.push({cat,kw,tier,disp:disp||(tier===3?pretty(kw):null),score:tier*1000+kw.length,re:new RegExp('(?:^|[^'+LET+'])'+escRe(kw)+'(?=$|[^'+LET+'])')});
+  }
+}
+function matchBuiltin(mtext){
+  let best=null, income=false;
+  for(const r of COMPILED){
+    if(mtext.indexOf(r.kw)<0) continue;
+    if(!r.re.test(mtext)) continue;
+    if(r.cat==='inntekt') income=true;
+    if(!best||r.score>best.score) best=r;
+  }
+  return {best,income};
+}
+
+function cleanDesc(s){
+  let t=' '+norm(s)+' ';
+  t=t.replace(/\*\d{4}(?!\d)/g,' ')
+     .replace(/(^|\s)(NOK|EUR|USD|SEK|DKK|GBP|CHF|PLN|ISK|THB|JPY)\s*-?[\d .,]*\d/g,' ')
+     .replace(/KURS:?\s*[\d.,]+/g,' ')
+     .replace(/\d{4}-\d{2}-\d{2}/g,' ')
+     .replace(/(^|\s)\d{1,2}\.\d{1,2}(\.\d{2,4})?(?=\s)/g,' ')
+     .replace(/BETAL(\.|ING)?\s*DATO|(^|\s)DATO(?=\s)/g,' ')
+     .replace(/RESERVERT(\s+TRANSAKSJON)?/g,' ')
+     .replace(/(^|\s)KID:?\s*\d*/g,' ')
+     .replace(/\d{6,}/g,' ')
+     .replace(/[\d]{4}\.\d{2}\.\d{5}/g,' ')
+     .replace(/\s+/g,' ').trim();
+  const pre=/^(VISA VAREKJØP|VISA VARE|VISA|VAREKJØP|VAREKJOP|VARE|KORTKJØP|KORTKJOP|KJØP|BANKAXEPT|BANKKORT|DEBETKORT|MASTERCARD|KONTAKTLØS|KORT|EFAKTURA|E-FAKTURA|AVTALEGIRO|GIRO|BETALING|BETALT|NETTGIRO|KREDITTKJØP|TERMINAL|OVERFØRING TIL|OVERFØRING FRA|NETTBANK TIL:?|NETTBANK FRA:?|TIL:|FRA:)(?=[\s:*-]|$)[\s:*-]*/;
+  let prev; do{prev=t;t=t.replace(pre,'');}while(t!==prev);
+  return t.replace(/^[\s*:.,\-]+|[\s*:.,\-]+$/g,'');
+}
+function shortName(clean,n){
+  let w=clean.split(' ').filter(Boolean);
+  while(w.length>1&&/^(AS|ASA|NUF|AB|LTD|INC|GMBH|BV|SA|APS|OY)$/.test(w[w.length-1]))w.pop();
+  return w.slice(0,n).join(' ');
+}
+
+/* Tall og datoer */
+function parseAmount(v){
+  if(typeof v==='number')return isFinite(v)?v:NaN;
+  if(v==null)return NaN;
+  let s=String(v).trim(); if(!s)return NaN;
+  s=s.replace(/(NOK|KR\.?|kr\.?)/gi,'').replace(/[\s  ']/g,'');
+  let neg=false;
+  if(/^\(.*\)$/.test(s)){neg=true;s=s.slice(1,-1);}
+  if(/^[-−–]/.test(s)){neg=true;s=s.slice(1);}
+  else if(/[-−–]$/.test(s)){neg=true;s=s.slice(0,-1);}
+  if(s[0]==='+')s=s.slice(1);
+  if(!/^[\d.,]+$/.test(s)||!/\d/.test(s))return NaN;
+  if(/^\d{1,3}(\.\d{3})+(,\d+)?$/.test(s)&&(s.includes(',')||(s.match(/\./g)||[]).length>1))s=s.replace(/\./g,'').replace(',','.');
+  else if(/^\d{1,3}(,\d{3})+(\.\d+)?$/.test(s)&&(s.includes('.')||(s.match(/,/g)||[]).length>1))s=s.replace(/,/g,'');
+  else if(s.includes(',')&&!s.includes('.'))s=s.replace(',','.');
+  else if(s.includes(',')&&s.includes('.')){ if(s.lastIndexOf(',')>s.lastIndexOf('.'))s=s.replace(/\./g,'').replace(',','.'); else s=s.replace(/,/g,''); }
+  if((s.match(/\./g)||[]).length>1)return NaN;
+  const n=Number(s); if(!isFinite(n))return NaN;
+  return neg?-n:n;
+}
+const MON=['januar','februar','mars','april','mai','juni','juli','august','september','oktober','november','desember'];
+const MON3=['jan','feb','mar','apr','mai','jun','jul','aug','sep','okt','nov','des'];
+function mkDate(y,m,d){ if(y<100)y+=2000; if(m<1||m>12||d<1||d>31||y<1990||y>2100)return null; const dt=new Date(y,m-1,d,12); return dt.getMonth()===m-1?dt:null; }
+function parseDate(v,allowSerial){
+  if(v instanceof Date&&!isNaN(v))return new Date(v.getFullYear(),v.getMonth(),v.getDate(),12);
+  if(typeof v==='number'){ if(allowSerial&&v>30000&&v<80000){const u=new Date(Date.UTC(1899,11,30)+Math.floor(v)*864e5);return new Date(u.getUTCFullYear(),u.getUTCMonth(),u.getUTCDate(),12);} return null; }
+  const s=String(v==null?'':v).trim(); if(!s)return null;
+  let m;
+  if((m=s.match(/^(\d{4})[-.\/](\d{1,2})[-.\/](\d{1,2})(?:$|[T\s])/)))return mkDate(+m[1],+m[2],+m[3]);
+  if((m=s.match(/^(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{2}|\d{4})(?:$|\s)/)))return mkDate(+m[3],+m[2],+m[1]);
+  if((m=s.match(/^(\d{1,2})\.?\s+([a-zæøå]{3})[a-zæøå]*\.?\s+(\d{4})/i))){const i=MON3.indexOf(m[2].toLowerCase());if(i>=0)return mkDate(+m[3],i+1,+m[1]);}
+  if(allowSerial&&/^\d{5}(\.\d+)?$/.test(s))return parseDate(Number(s),true);
+  return null;
+}
+
+/* CSV */
+function detectDelim(text){
+  const lines=text.split(/\r?\n/).filter(l=>l.trim()).slice(0,40);
+  let best=';',bs=-1;
+  for(const d of [';','\t',',','|']){
+    const counts=lines.map(l=>{let c=0,q=false;for(const ch of l){if(ch==='"')q=!q;else if(ch===d&&!q)c++;}return c;});
+    const freq={};counts.forEach(c=>{if(c>0)freq[c]=(freq[c]||0)+1;});
+    let mode=0,mf=0;for(const k in freq)if(freq[k]>mf||(freq[k]===mf&&+k>mode)){mf=freq[k];mode=+k;}
+    if(!mode)continue;
+    const score=(mf/lines.length)*10+Math.min(mode,12)/12+(d===';'?.05:0);
+    if(score>bs){bs=score;best=d;}
+  }
+  return best;
+}
+function parseCSV(text){
+  text=text.replace(/^﻿/,'');
+  const d=detectDelim(text);
+  const rows=[];let row=[],f='',q=false,start=true;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(q){ if(c==='"'){ if(text[i+1]==='"'){f+='"';i++;} else q=false; } else f+=c; continue; }
+    if(c==='"'&&start){q=true;start=false;continue;}
+    if(c===d){row.push(f);f='';start=true;continue;}
+    if(c==='\n'||c==='\r'){ if(c==='\r'&&text[i+1]==='\n')i++; row.push(f);rows.push(row);row=[];f='';start=true;continue; }
+    if(start&&(c===' '||c==='\t')&&d!=='\t'){continue;}
+    f+=c;start=false;
+  }
+  if(f!==''||row.length){row.push(f);rows.push(row);}
+  return rows.map(r=>r.map(x=>typeof x==='string'?x.trim():x)).filter(r=>r.some(x=>String(x).trim()!==''));
+}
+function decodeBuf(buf){
+  const b=new Uint8Array(buf);
+  if(b[0]===0xFF&&b[1]===0xFE)return new TextDecoder('utf-16le').decode(buf);
+  if(b[0]===0xFE&&b[1]===0xFF)return new TextDecoder('utf-16be').decode(buf);
+  try{return new TextDecoder('utf-8',{fatal:true}).decode(buf);}catch(e){return new TextDecoder('windows-1252').decode(buf);}
+}
+
+/* Kolonner */
+const normH=s=>String(s==null?'':s).toLowerCase().replace(/["']/g,'').replace(/\s+/g,' ').trim();
+const HDR=/^(dato|date|bokført|bokført dato|bokføringsdato|transaksjonsdato|kjøpsdato|utført dato|forklaring|beskrivelse|tekst|text|transaksjonstekst|tittel|beløp|belop|amount|beløp nok|beløp i nok|ut fra konto|inn på konto|ut|inn|rentedato|valuteringsdato|saldo|mottaker|avsender|navn|valuta|kategori|underkategori|type|arkivreferanse|referanse|melding|debet|kredit|status|avstemt|betalingstype|description|booking date|transaction date)$/;
+function findHeader(rows){
+  for(let i=0;i<Math.min(rows.length,25);i++){
+    let hits=0; for(const c of rows[i]){ const h=normH(c); if(h&&(HDR.test(h)||/^(bokf|beløp|belop|forklaring|beskrivelse|ut fra|inn på)/.test(h)))hits++; }
+    if(hits>=2)return i;
+  }
+  return -1;
+}
+function roleScore(h,role){
+  if(!h)return 0;
+  if(role==='date'){ if(/^(bokføringsdato|bokført dato|bokført|bokf\.? ?dato|booking date)$/.test(h))return 10; if(/^(transaksjonsdato|kjøpsdato|utført dato|transaction date)$/.test(h))return 9; if(/^(dato|date)$/.test(h))return 8; if(/rente|valuter|value/.test(h))return /dato|date/.test(h)?2:0; if(/dato|date/.test(h))return 6; return 0; }
+  if(role==='text'){ if(/^(forklaring|beskrivelse|transaksjonstekst|description)$/.test(h))return 10; if(/^(tekst|text)$/.test(h))return 9; if(h==='tittel')return 8; if(/^(navn|butikk|merchant)$/.test(h))return 6; if(/^(melding|mottaker)$/.test(h))return 4; if(/tekst|forklaring|beskrivelse/.test(h))return 7; return 0; }
+  if(role==='amount'){ if(/valuta|currency|original/.test(h))return 0; if(/^(beløp|belop|amount|sum|beløp nok|beløp i nok|beløp \(nok\)|nok)$/.test(h))return 10; if(/beløp|belop|amount/.test(h))return 7; return 0; }
+  if(role==='out'){ if(/^(ut fra konto|ut|uttak|debet|belastet|utgift|utgående|ut \(nok\)|ut nok|beløp ut)$/.test(h))return 10; if(/^ut fra|^ut |debet/.test(h))return 8; return 0; }
+  if(role==='in'){ if(/^(inn på konto|inn|innskudd|kredit|godskrevet|inn \(nok\)|inn nok|beløp inn)$/.test(h))return 10; if(/^inn på|^inn |kredit/.test(h))return 8; return 0; }
+  return 0;
+}
+function colCount(rows){return rows.reduce((m,r)=>Math.max(m,r.length),0);}
+function profile(rows,start,nc){
+  const P=[]; const data=rows.slice(start,start+400);
+  for(let c=0;c<nc;c++){
+    let ne=0,dt=0,dtS=0,num=0,neg=0,pos=0,len=0;
+    for(const r of data){ const v=r[c]; const s=String(v==null?'':v).trim(); if(!s)continue; ne++; len+=s.length;
+      if(parseDate(v,false))dt++; else if(parseDate(v,true))dtS++;
+      const a=parseAmount(v); if(!isNaN(a)&&!parseDate(v,false)){num++; if(a<0)neg++; else if(a>0)pos++;} }
+    P.push({ne,dt:ne?dt/ne:0,dtS:ne?dtS/ne:0,num:ne?num/ne:0,neg,pos,len:ne?len/ne:0,fill:data.length?ne/data.length:0});
+  }
+  return P;
+}
+function detect(rows){
+  const nc=colCount(rows); const hr=findHeader(rows); const start=hr+1;
+  const H=Array.from({length:nc},(_,c)=>hr>=0?normH(rows[hr][c]):'');
+  const P=profile(rows,start,nc);
+  const pick=(role,excl)=>{let b=-1,bs=0;for(let c=0;c<nc;c++){if(excl.includes(c))continue;const s=roleScore(H[c],role);if(s>bs){bs=s;b=c;}}return {c:b,s:bs};};
+  const map={headerRow:hr,date:-1,text:-1,mode:'single',amount:-1,out:-1,inn:-1,flip:false,extra:[],serial:false};
+  let d=pick('date',[]); map.date=d.c;
+  if(map.date>=0&&P[map.date].dt+P[map.date].dtS<0.5)map.date=-1;
+  if(map.date<0){ let b=-1,bs=0.6; P.forEach((p,c)=>{const s=Math.max(p.dt,p.dtS*0.9);if(s>bs){bs=s;b=c;}}); map.date=b; }
+  if(map.date>=0&&P[map.date].dt<0.5&&P[map.date].dtS>=0.5)map.serial=true;
+  const used=[map.date];
+  const a=pick('amount',used), o=pick('out',used), i=pick('in',used);
+  if(a.c>=0&&a.s>=Math.max(o.s,i.s)&&P[a.c].num>0.5){map.mode='single';map.amount=a.c;used.push(a.c);}
+  else if((o.c>=0||i.c>=0)&&o.c!==i.c){map.mode='split';map.out=o.c;map.inn=i.c;used.push(o.c,i.c);}
+  else{
+    const cand=[]; P.forEach((p,c)=>{ if(used.includes(c)||H[c]==='saldo'||/saldo|balance/.test(H[c]))return; if(p.num>=0.8&&p.ne>0)cand.push(c); });
+    const mixed=cand.find(c=>P[c].neg>0&&P[c].pos>0&&P[c].fill>0.8);
+    if(mixed!=null){map.mode='single';map.amount=mixed;}
+    else if(cand.length>=2){ const sparse=cand.filter(c=>P[c].fill<0.95); if(sparse.length>=2){map.mode='split';map.out=sparse[0];map.inn=sparse[1];} else {map.mode='single';map.amount=cand[0];} }
+    else if(cand.length===1){map.mode='single';map.amount=cand[0];}
+    used.push(map.amount,map.out,map.inn);
+  }
+  const t=pick('text',used.filter(x=>x>=0));
+  map.text=t.c;
+  if(map.text<0){ let b=-1,bl=0; P.forEach((p,c)=>{ if(used.includes(c))return; if(p.num<0.3&&p.dt<0.3&&p.len>bl){bl=p.len;b=c;} }); map.text=b; }
+  if(hr>=0)H.forEach((h,c)=>{ if(c!==map.text&&!used.includes(c)&&/^(mottaker|avsender|navn|kategori|underkategori|type|melding|betalingstype|tittel|beskrivelse|forklaring|tekst)$/.test(h))map.extra.push(c); });
+  if(map.mode==='single'&&map.amount>=0){ const p=P[map.amount]; if(p.pos+p.neg>3&&p.pos/(p.pos+p.neg)>=0.9)map.flip=true; }
+  return map;
+}
+function buildTx(rows,map){
+  const out=[]; let skipped=0; const start=map.headerRow+1;
+  for(let r=start;r<rows.length;r++){
+    const row=rows[r]; if(!row)continue;
+    const d=map.date>=0?parseDate(row[map.date],map.serial||true):null;
+    if(!d){skipped++;continue;}
+    let amt=NaN;
+    if(map.mode==='single'){ amt=map.amount>=0?parseAmount(row[map.amount]):NaN; if(map.flip&&!isNaN(amt))amt=-amt; }
+    else{ const o=map.out>=0?parseAmount(row[map.out]):NaN, i=map.inn>=0?parseAmount(row[map.inn]):NaN;
+      if(!isNaN(o)&&o!==0)amt=-Math.abs(o); else if(!isNaN(i)&&i!==0)amt=Math.abs(i);
+      if(map.flip&&!isNaN(amt))amt=-amt; }
+    if(isNaN(amt)||amt===0){skipped++;continue;}
+    const text=String(map.text>=0&&row[map.text]!=null?row[map.text]:'').trim();
+    const extra=map.extra.map(c=>String(row[c]==null?'':row[c]).trim()).filter(Boolean);
+    const shown=text||extra[0]||'(uten tekst)';
+    out.push({id:out.length,d,text:shown,mtext:norm([text,...extra].join(' ')),amt:Math.round(amt*100)/100});
+  }
+  return {txs:out,skipped};
+}
+function categorize(tx,rules,overrides){
+  const key=txKey(tx);
+  let ur=null; for(const r of rules){ if(tx.mtext.includes(r.kw)&&(!ur||r.kw.length>ur.kw.length))ur=r; }
+  const m=matchBuiltin(tx.mtext);
+  const clean=cleanDesc(tx.text);
+  let cat;
+  if(overrides[key]&&CAT[overrides[key]])cat=overrides[key];
+  else if(ur&&CAT[ur.cat])cat=ur.cat;
+  else if(tx.amt>0&&m.income)cat='inntekt';
+  else if(m.best)cat=m.best.cat;
+  else cat=tx.amt>0?'inntekt':'annet';
+  if(!overrides[key]){ const c=CAT[cat]; if(tx.amt>0&&c.posTo)cat=c.posTo; if(tx.amt<0&&c.negTo)cat=c.negTo; }
+  let merchant, mkey;
+  if(m.best&&m.best.tier===3){ merchant=m.best.disp; mkey=m.best.kw; }
+  else if(m.best&&m.best.tier===1&&m.best.cat==='vipps'){ const rest=shortName(clean.replace(/^(VIPPS|MOBILEPAY)\s*\*?\s*/,''),3); merchant=rest?'Vipps · '+pretty(rest):'Vipps'; mkey=norm(rest?'VIPPS '+rest.split(' ').slice(0,2).join(' '):'VIPPS'); }
+  else { const sn=shortName(clean,3); merchant=sn?pretty(sn):tx.text.slice(0,40); mkey=shortName(clean,2)||norm(tx.text).slice(0,24); }
+  tx.cat=cat; tx.merchant=merchant; tx.mkey=mkey; tx.key=key;
+  return tx;
+}
+function txKey(tx){return tx.d.getFullYear()+'-'+(tx.d.getMonth()+1)+'-'+tx.d.getDate()+'|'+tx.mtext.slice(0,60)+'|'+tx.amt;}
+/*CORE-END*/
+
+/* ===== App ===== */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const NF0=new Intl.NumberFormat('nb-NO',{maximumFractionDigits:0});
+const NF2=new Intl.NumberFormat('nb-NO',{minimumFractionDigits:2,maximumFractionDigits:2});
+const num0=v=>NF0.format(Math.round(Math.abs(v))).replace(/\s/g,' ');
+const kr=v=>(v<-0.5?'−':'')+'kr '+num0(v);
+const amt2=v=>(v<0?'−':'+')+NF2.format(Math.abs(v)).replace(/\s/g,' ');
+const pad=n=>String(n).padStart(2,'0');
+const dShort=d=>pad(d.getDate())+'.'+pad(d.getMonth()+1);
+const dLong=d=>d.getDate()+'. '+MON[d.getMonth()]+' '+d.getFullYear();
+function dRange(a,b){ if(a.getFullYear()===b.getFullYear()){ return a.getDate()+'. '+MON[a.getMonth()]+' – '+dLong(b);} return dLong(a)+' – '+dLong(b); }
+const LS={get(k,f){try{const v=localStorage.getItem(k);return v==null?f:JSON.parse(v);}catch(e){return f;}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}};
+
+const state={rows:null,map:null,fileName:'',isSample:true,skipped:0,txs:[],buckets:[],mode:'month',period:null,cat:null,q:'',shown:30,
+  rules:LS.get('hgp.rules',[]),overrides:LS.get('hgp.overrides',{}),incl:LS.get('hgp.incl',false),minD:null,maxD:null,error:''};
+
+function isoWeek(d){const t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));const day=t.getUTCDay()||7;t.setUTCDate(t.getUTCDate()+4-day);const y=t.getUTCFullYear();const w=Math.ceil(((t-Date.UTC(y,0,1))/864e5+1)/7);return {y,w};}
+function monday(d){const x=new Date(d.getFullYear(),d.getMonth(),d.getDate(),12);const day=x.getDay()||7;x.setDate(x.getDate()-day+1);return x;}
+const mKey=d=>'m'+d.getFullYear()+'-'+pad(d.getMonth()+1);
+const wKey=d=>{const w=isoWeek(d);return 'w'+w.y+'-'+pad(w.w);};
+
+function loadRows(rows,fileName,isSample){
+  state.rows=rows; state.fileName=fileName; state.isSample=!!isSample;
+  state.map=detect(rows); state.period=null; state.cat=null; state.q=''; $('#q').value=''; state.shown=30;
+  rebuild();
+  if(!state.txs.length){ state.error='Fant ingen transaksjoner med dato og beløp i filen. Velg kolonnene selv under «Fil og kolonner».'; $('#mapDetails').open=true; render(); }
+}
+function rebuild(){
+  state.error='';
+  const {txs,skipped}=state.rows?buildTx(state.rows,state.map):{txs:[],skipped:0};
+  state.txs=txs; state.skipped=skipped;
+  recategorize(false);
+  computeBuckets();
+  render();
+}
+function recategorize(doRender=true){
+  for(const t of state.txs)categorize(t,state.rules,state.overrides);
+  if(doRender)render();
+}
+function computeBuckets(){
+  const T=state.txs; state.buckets=[];
+  if(!T.length){state.minD=state.maxD=null;return;}
+  let mn=T[0].d,mx=T[0].d; for(const t of T){if(t.d<mn)mn=t.d;if(t.d>mx)mx=t.d;}
+  state.minD=mn; state.maxD=mx;
+  const span=(mx-mn)/864e5+1;
+  state.mode=span<=70?'week':'month';
+  const B=[];
+  if(state.mode==='month'){
+    let cur=new Date(mn.getFullYear(),mn.getMonth(),1,12); const multiYear=mn.getFullYear()!==mx.getFullYear();
+    while(cur<=mx){ const y=cur.getFullYear(),m=cur.getMonth(); const last=new Date(y,m+1,0).getDate();
+      const partial=(y===mn.getFullYear()&&m===mn.getMonth()&&mn.getDate()>3)||(y===mx.getFullYear()&&m===mx.getMonth()&&mx.getDate()<last-3);
+      B.push({key:mKey(cur),label:MON3[m]+(multiYear&&(m===0||!B.length)?' '+String(y).slice(2):''),long:MON[m][0].toUpperCase()+MON[m].slice(1)+' '+y,partial,start:new Date(y,m,1,12),end:new Date(y,m,last,12)});
+      cur=new Date(y,m+1,1,12); }
+  }else{
+    let cur=monday(mn);
+    while(cur<=mx){ const end=new Date(cur.getFullYear(),cur.getMonth(),cur.getDate()+6,12); const w=isoWeek(cur);
+      const partial=cur<new Date(mn.getFullYear(),mn.getMonth(),mn.getDate()-0,0)||end>new Date(mx.getFullYear(),mx.getMonth(),mx.getDate(),23);
+      const sameM=cur.getMonth()===end.getMonth();
+      B.push({key:wKey(cur),label:'u.'+w.w,long:'Uke '+w.w+' ('+cur.getDate()+'.'+(sameM?'':' '+MON3[cur.getMonth()])+'–'+end.getDate()+'. '+MON3[end.getMonth()]+')',partial,start:cur,end});
+      cur=new Date(cur.getFullYear(),cur.getMonth(),cur.getDate()+7,12); }
+  }
+  state.buckets=B;
+  for(const t of T)t.bucket=state.mode==='month'?mKey(t.d):wKey(t.d);
+}
+function spendIds(){return CATS.filter(c=>!c.income&&(!c.nonSpend||state.incl)).map(c=>c.id);}
+
+function agg(){
+  const inP=state.txs.filter(t=>!state.period||t.bucket===state.period);
+  const net={},cnt={}; CATS.forEach(c=>{net[c.id]=0;cnt[c.id]=0;});
+  for(const t of inP){ net[t.cat]-=t.amt; if(t.amt<0)cnt[t.cat]++; }
+  const S=spendIds(); let total=0,buys=0; for(const id of S){total+=net[id];buys+=cnt[id];}
+  const income=-net.inntekt;
+  let days;
+  if(state.period){ const b=state.buckets.find(b=>b.key===state.period); const a=b.start<state.minD?state.minD:b.start, e=b.end>state.maxD?state.maxD:b.end; days=(e-a)/864e5+1; }
+  else days=state.minD?(state.maxD-state.minD)/864e5+1:0;
+  return {inP,net,cnt,total,buys,income,days,months:days/30.44,S};
+}
+
+/* ===== Render ===== */
+function render(){
+  const A=agg();
+  renderNotice(); renderHero(A); renderCats(A); renderChart(); renderMerch(A); renderTxs(A); renderSettings();
+}
+function renderNotice(){
+  const n=$('#notice'); n.className='notice';
+  if(state.error){ n.classList.add('err'); n.innerHTML='<span class="pill">Feil</span><span>'+esc(state.error)+'</span>'; }
+  else if(state.isSample){ n.innerHTML='<span class="pill">Eksempeldata</span><span>Tallene under er oppdiktet. Last inn din egen kontoutskrift for å se hvor dine penger går.</span>'; }
+  else n.innerHTML='';
+  n.hidden=!n.innerHTML;
+  $('#sampleBtn').hidden=state.isSample;
+}
+function renderHero(A){
+  const b=state.period?state.buckets.find(x=>x.key===state.period):null;
+  const ey=$('#eyebrow');
+  if(!state.txs.length){ ey.textContent='Ingen transaksjoner'; $('#totalNum').textContent='0'; $('#totalSub').textContent='Last inn en kontoutskrift for å komme i gang.'; $('#stats').innerHTML=''; return; }
+  ey.innerHTML=esc(b?b.long:dRange(state.minD,state.maxD))+(b?'<button type="button" id="clrP" aria-label="Vis hele perioden">Hele perioden ×</button>':'');
+  if(b)$('#clrP').onclick=()=>{state.period=null;state.shown=30;render();};
+  $('#totalNum').textContent=num0(A.total);
+  let sub;
+  if(b) sub='brukt '+(state.mode==='month'?'denne måneden':'denne uken')+(b.partial?' (bare deler av perioden er med i filen)':'');
+  else { const mo=A.months; sub='brukt på '+(mo>=1.5?Math.round(mo)+' måneder':Math.round(A.days)+' dager'); }
+  if(state.incl)sub+=', inkludert sparing og overføringer';
+  $('#totalSub').textContent=sub+'.';
+  const st=[];
+  if(!b&&A.months>=1.5)st.push(['Snitt per måned',kr(A.total/A.months)]);
+  st.push(['Inn',kr(A.income),'in']);
+  st.push(['Kjøp og regninger',NF0.format(A.buys)]);
+  const unc=A.cnt.annet; if(unc>0)st.push(['Ikke sortert','<button type="button" id="goUnc">'+NF0.format(unc)+' stk · '+kr(A.net.annet)+'</button>']);
+  $('#stats').innerHTML=st.map(s=>'<div><dt>'+s[0]+'</dt><dd'+(s[2]?' class="'+s[2]+'"':'')+'>'+s[1]+'</dd></div>').join('');
+  const g=$('#goUnc'); if(g)g.onclick=()=>{state.cat='annet';state.shown=30;render();$('#txH').scrollIntoView({behavior:'smooth',block:'start'});};
+}
+function catRow(c,A,maxV,extraCls){
+  const v=A.net[c.id]; const share=A.total>0?v/A.total*100:0;
+  const meta=[];
+  if(!c.nonSpend)meta.push(Math.round(share)+' %');
+  meta.push(NF0.format(A.cnt[c.id])+' '+(A.cnt[c.id]===1?'trekk':'trekk'));
+  if(!state.period&&A.months>=1.5)meta.push('ca. '+kr(v/A.months)+' i mnd.');
+  let metaTxt=meta.join(' · ');
+  if(c.id==='annet')metaTxt='Trykk for å se dem og velge kategori · '+metaTxt;
+  const w=maxV>0?Math.max(0,v)/maxV*100:0;
+  return '<button type="button" class="cat'+(state.cat===c.id?' on':'')+(c.id==='annet'?' flag':'')+(extraCls||'')+'" data-cat="'+c.id+'" aria-pressed="'+(state.cat===c.id)+'"><span class="cat-name">'+esc(c.name)+'</span><span class="cat-amt">'+kr(v)+'</span><span class="cat-bar"><i style="width:'+w.toFixed(1)+'%"></i></span><span class="cat-meta">'+metaTxt+'</span></button>';
+}
+function renderCats(A){
+  const box=$('#cats');
+  const list=CATS.filter(c=>!c.income&&!c.nonSpend&&(Math.abs(A.net[c.id])>0.5||A.cnt[c.id]>0)).sort((a,b)=>A.net[b.id]-A.net[a.id]);
+  const ns=CATS.filter(c=>c.nonSpend&&(Math.abs(A.net[c.id])>0.5||A.cnt[c.id]>0));
+  const maxV=Math.max(0,...list.map(c=>A.net[c.id]),...(state.incl?ns.map(c=>A.net[c.id]):[]));
+  $('#catMeta').textContent=list.length?list.length+' kategorier':'';
+  box.className='cats'+(state.cat?' has-on':'');
+  box.innerHTML=list.length?list.map(c=>catRow(c,A,maxV)).join(''):'<p class="empty">Ingen utgifter i perioden.</p>';
+  const nb=$('#nonSpend');
+  if(ns.length){
+    nb.innerHTML='<div class="subhead"><span>Sparing og overføringer</span><label class="check"><input type="checkbox" id="incl"'+(state.incl?' checked':'')+'> Regn med i forbruket</label></div><div class="cats'+(state.cat?' has-on':'')+'">'+ns.map(c=>catRow(c,A,maxV,state.incl?'':' muted')).join('')+'</div>';
+    $('#incl').onchange=e=>{state.incl=e.target.checked;LS.set('hgp.incl',state.incl);render();};
+  } else nb.innerHTML='';
+  document.querySelectorAll('.cat').forEach(el=>el.onclick=()=>{const id=el.dataset.cat;state.cat=state.cat===id?null:id;state.shown=30;render();});
+}
+
+/* Diagram */
+let chartRO=null;
+function bucketVals(){
+  const ids=state.cat?[state.cat]:spendIds();
+  const set=new Set(ids); const v={},n={};
+  state.buckets.forEach(b=>{v[b.key]=0;n[b.key]=0;});
+  for(const t of state.txs){ if(!set.has(t.cat))continue; v[t.bucket]-=t.amt; if(t.amt<0)n[t.bucket]++; }
+  return {v,n};
+}
+function niceStep(x){ if(x<=0)return 1; const p=Math.pow(10,Math.floor(Math.log10(x))); const f=x/p; return (f<=1?1:f<=2?2:f<=2.5?2.5:f<=5?5:10)*p; }
+function renderChart(){
+  const box=$('#chart'); const B=state.buckets;
+  const unit=state.mode==='month'?'måned':'uke';
+  $('#chartH').textContent=(state.cat?CAT[state.cat].name:'Forbruk')+' per '+unit;
+  $('#chartHint').textContent='Trykk på en søyle for å se bare den '+(state.mode==='month'?'måneden':'uken')+'.';
+  if(!B.length){box.innerHTML='<p class="empty">Ingen data å vise ennå.</p>';$('#chartMeta').textContent='';return;}
+  const {v,n}=bucketVals();
+  const vals=B.map(b=>v[b.key]); const max=Math.max(0,...vals);
+  $('#chartMeta').textContent=B.length+' '+(state.mode==='month'?(B.length===1?'måned':'måneder'):(B.length===1?'uke':'uker'));
+  const W=Math.max(280,Math.round(box.clientWidth||600)), H=220, padL=60, padR=8, padT=26, padB=30;
+  const iw=W-padL-padR, ih=H-padT-padB;
+  const step=niceStep(max/3||1); const top=Math.max(step,Math.ceil(max/step)*step);
+  const y=val=>padT+ih-(Math.max(0,val)/top)*ih;
+  const col=iw/B.length; const bw=Math.max(4,Math.min(56,col*0.62));
+  let s='<svg viewBox="0 0 '+W+' '+H+'" width="'+W+'" height="'+H+'" role="img" aria-label="'+esc($('#chartH').textContent)+'">';
+  for(let t=0;t<=top+0.001;t+=step){ const yy=y(t).toFixed(1); s+=(t===0?'':'<line class="gl" x1="'+padL+'" x2="'+(W-padR)+'" y1="'+yy+'" y2="'+yy+'"/>')+'<text class="tl" x="'+(padL-8)+'" y="'+(+yy+4)+'" text-anchor="end">'+num0(t)+'</text>'; }
+  const every=Math.max(1,Math.ceil(30/col));
+  const selI=state.period?B.findIndex(b=>b.key===state.period):-1;
+  let labI=selI; if(labI<0){let mi=-1,mv=-1;vals.forEach((x,i)=>{if(x>mv){mv=x;mi=i;}});labI=mi;}
+  B.forEach((b,i)=>{
+    const val=vals[i]; const x0=padL+col*i+(col-bw)/2, x1=x0+bw, yb=padT+ih, yt=y(val); const h=yb-yt;
+    if(h>0.5){ const r=Math.min(4,bw/2,h); s+='<path class="bar'+(selI>=0&&i!==selI?' dim':'')+'" data-i="'+i+'" d="M'+x0.toFixed(1)+' '+yb+'V'+(yt+r).toFixed(1)+'Q'+x0.toFixed(1)+' '+yt.toFixed(1)+' '+(x0+r).toFixed(1)+' '+yt.toFixed(1)+'H'+(x1-r).toFixed(1)+'Q'+x1.toFixed(1)+' '+yt.toFixed(1)+' '+x1.toFixed(1)+' '+(yt+r).toFixed(1)+'V'+yb+'Z"/>'; }
+    if(i%every===0||i===selI){ s+='<text class="xl'+(i===selI?' on':'')+'" x="'+(padL+col*i+col/2).toFixed(1)+'" y="'+(H-10)+'" text-anchor="middle">'+esc(b.label)+'</text>'; }
+  });
+  s+='<line class="base" x1="'+padL+'" x2="'+(W-padR)+'" y1="'+(padT+ih)+'" y2="'+(padT+ih)+'"/>';
+  if(labI>=0&&vals[labI]>0){ const cx=padL+col*labI+col/2; const txt='kr '+num0(vals[labI]); const tw=txt.length*7; let anchor='middle',tx=cx; if(cx-tw/2<padL){anchor='start';tx=padL+col*labI+(col-bw)/2;} else if(cx+tw/2>W-padR){anchor='end';tx=padL+col*labI+(col+bw)/2;} s+='<text class="vl" x="'+tx.toFixed(1)+'" y="'+(y(vals[labI])-8).toFixed(1)+'" text-anchor="'+anchor+'">'+txt+'</text>'; }
+  B.forEach((b,i)=>{ s+='<rect class="hit" data-i="'+i+'" x="'+(padL+col*i).toFixed(1)+'" y="'+padT+'" width="'+col.toFixed(1)+'" height="'+ih+'" tabindex="0" role="button" aria-label="'+esc(b.long+': kr '+num0(vals[i]))+'"/>'; });
+  s+='</svg><div class="tip" id="tip" hidden></div>';
+  box.innerHTML=s;
+  const tip=$('#tip');
+  const show=(i,ev)=>{ const b=B[i]; tip.innerHTML='<b>'+esc(b.long)+'</b><br><span class="n">kr '+num0(vals[i])+'</span> · '+n[b.key]+' trekk'+(b.partial?'<br><span class="p">Bare deler av perioden er med i filen</span>':''); tip.hidden=false;
+    const bx=box.getBoundingClientRect(); const cx=padL+col*i+col/2; const sc=bx.width/W; let left=cx*sc-tip.offsetWidth/2; left=Math.max(0,Math.min(bx.width-tip.offsetWidth,left)); tip.style.left=left+'px'; tip.style.top=Math.max(0,(y(vals[i])*sc-tip.offsetHeight-14))+'px';
+    box.querySelectorAll('.bar').forEach(el=>el.classList.toggle('hov',+el.dataset.i===i)); };
+  const hide=()=>{tip.hidden=true;box.querySelectorAll('.bar.hov').forEach(el=>el.classList.remove('hov'));};
+  box.querySelectorAll('.hit').forEach(el=>{ const i=+el.dataset.i;
+    el.addEventListener('pointerenter',e=>{if(e.pointerType==='mouse')show(i,e);});
+    el.addEventListener('pointerleave',hide);
+    el.addEventListener('focus',()=>show(i));
+    el.addEventListener('blur',hide);
+    const act=()=>{const k=B[i].key;state.period=state.period===k?null:k;state.shown=30;render();};
+    el.addEventListener('click',act);
+    el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();act();}});
+  });
+  if(!chartRO&&window.ResizeObserver){ let lastW=W; chartRO=new ResizeObserver(()=>{const w=Math.round(box.clientWidth);if(Math.abs(w-lastW)>4){lastW=w;renderChart();}}); chartRO.observe(box); }
+}
+
+function renderMerch(A){
+  const ids=new Set(state.cat?[state.cat]:A.S);
+  const g=new Map();
+  for(const t of A.inP){ if(!ids.has(t.cat))continue; const k=t.merchant; const o=g.get(k)||{name:k,net:0,n:0,cat:t.cat}; o.net-=t.amt; if(t.amt<0)o.n++; g.set(k,o); }
+  const top=[...g.values()].filter(o=>o.net>0.5).sort((a,b)=>b.net-a.net).slice(0,8);
+  $('#merchMeta').textContent=g.size?NF0.format(g.size)+' steder':'';
+  $('#merch').innerHTML=top.length?top.map((o,i)=>'<button type="button" class="mrow" data-m="'+esc(o.name)+'"><span class="m-rank">'+(i+1)+'</span><span class="m-name">'+esc(o.name)+'</span><span class="m-amt">'+kr(o.net)+'</span><span class="m-sub">'+o.n+' '+(o.n===1?'gang':'ganger')+' · '+esc(CAT[o.cat].name)+'</span></button>').join(''):'<p class="empty">Ingenting å vise her.</p>';
+  document.querySelectorAll('.mrow').forEach(el=>el.onclick=()=>{state.q=el.dataset.m;$('#q').value=state.q;state.shown=30;renderTxs(agg());$('#txH').scrollIntoView({behavior:'smooth',block:'start'});});
+}
+function renderTxs(A){
+  const q=state.q.trim().toUpperCase();
+  let L=A.inP.filter(t=>(!state.cat||t.cat===state.cat)&&(!q||t.mtext.includes(q)||t.merchant.toUpperCase().includes(q)));
+  L.sort((a,b)=>b.d-a.d||a.id-b.id);
+  const sum=L.reduce((s,t)=>s+t.amt,0);
+  $('#txMeta').textContent=NF0.format(L.length)+' stk'+(L.length?' · netto '+(sum<0?'−':'+')+'kr '+num0(sum):'');
+  const f=[];
+  if(state.cat)f.push(['cat',CAT[state.cat].name]);
+  if(state.period)f.push(['period',state.buckets.find(b=>b.key===state.period).long]);
+  if(state.q)f.push(['q','«'+state.q+'»']);
+  $('#filters').innerHTML=f.map(x=>'<button type="button" class="fchip" data-f="'+x[0]+'" aria-label="Fjern filter '+esc(x[1])+'">'+esc(x[1])+'<span aria-hidden="true">×</span></button>').join('');
+  document.querySelectorAll('.fchip').forEach(el=>el.onclick=()=>{const k=el.dataset.f;if(k==='cat')state.cat=null;if(k==='period')state.period=null;if(k==='q'){state.q='';$('#q').value='';}state.shown=30;render();});
+  const show=L.slice(0,state.shown);
+  $('#txs').innerHTML=show.length?show.map(t=>'<div class="tx"><span class="tx-date">'+dShort(t.d)+'</span><div class="tx-main"><div class="tx-merch">'+esc(t.merchant)+'</div><div class="tx-raw" title="'+esc(t.text)+'">'+esc(t.text)+'</div></div><span class="tx-amt'+(t.amt>0?' pos':'')+'">'+amt2(t.amt)+'</span><button type="button" class="chip'+(t.cat==='annet'?' flag':'')+'" data-id="'+t.id+'" aria-label="Kategori: '+esc(CAT[t.cat].name)+'. Trykk for å endre.">'+esc(CAT[t.cat].name)+'</button></div>').join(''):'<p class="empty">Ingen transaksjoner passer med filteret.</p>';
+  document.querySelectorAll('.tx .chip').forEach(el=>el.onclick=()=>openSheet(state.txs[+el.dataset.id]));
+  const more=$('#more'); const left=L.length-show.length; more.hidden=left<=0; if(left>0)more.textContent='Vis '+Math.min(left,100)+' til ('+NF0.format(left)+' igjen)';
+}
+
+/* Fil og kolonner */
+const colLetter=c=>{let s='';c++;while(c>0){const m=(c-1)%26;s=String.fromCharCode(65+m)+s;c=Math.floor((c-1)/26);}return s;};
+function colLabel(c){
+  const R=state.rows, m=state.map;
+  const head=m.headerRow>=0?String(R[m.headerRow][c]==null?'':R[m.headerRow][c]).trim():'';
+  const ex=R[m.headerRow+1]&&R[m.headerRow+1][c]!=null?String(R[m.headerRow+1][c]).trim().slice(0,24):'';
+  return (head||'Kolonne '+colLetter(c))+(ex&&!head?' (f.eks. '+ex+')':'');
+}
+function fillSel(id,val){
+  const nc=colCount(state.rows); let h='<option value="-1">Ingen</option>';
+  for(let c=0;c<nc;c++)h+='<option value="'+c+'"'+(c===val?' selected':'')+'>'+esc(colLabel(c))+'</option>';
+  $(id).innerHTML=h;
+}
+function renderSettings(){
+  if(!state.rows){$('#fileInfo').textContent='Ingen fil lastet inn.';return;}
+  const m=state.map;
+  const name=state.isSample?'Eksempelfil (DNB-lignende format)':state.fileName;
+  let info='<b>'+esc(name)+'</b><br>'+NF0.format(state.txs.length)+' transaksjoner';
+  if(state.minD)info+=' fra '+dShort(state.minD)+'.'+state.minD.getFullYear()+' til '+dShort(state.maxD)+'.'+state.maxD.getFullYear();
+  if(state.skipped)info+='. '+state.skipped+' rader uten dato eller beløp ble hoppet over';
+  info+='.';
+  const parts=[]; const lab=c=>c>=0?colLabel(c).replace(/ \(f\.eks\..*$/,''):'ingen';
+  parts.push('Dato: '+lab(m.date)); parts.push('Tekst: '+lab(m.text));
+  if(m.mode==='single')parts.push('Beløp: '+lab(m.amount)); else parts.push('Ut: '+lab(m.out),'Inn: '+lab(m.inn));
+  info+='<br>'+esc(parts.join(' · '))+(m.flip?' · fortegnet er snudd':'');
+  $('#fileInfo').innerHTML=info;
+  fillSel('#mapDate',m.date); fillSel('#mapText',m.text); fillSel('#mapAmt',m.amount); fillSel('#mapOut',m.out); fillSel('#mapIn',m.inn);
+  $('#modeSingle').checked=m.mode==='single'; $('#modeSplit').checked=m.mode==='split';
+  $('#fAmt').hidden=m.mode!=='single'; $('#fOut').hidden=m.mode!=='split'; $('#fIn').hidden=m.mode!=='split';
+  $('#mapFlip').checked=!!m.flip;
+  const pv=state.txs.slice(0,4);
+  $('#preview').innerHTML=pv.length?'<table><thead><tr><th>Dato</th><th>Tekst</th><th style="text-align:right">Beløp</th><th>Kategori</th></tr></thead><tbody>'+pv.map(t=>'<tr><td>'+dShort(t.d)+'.'+t.d.getFullYear()+'</td><td>'+esc(t.text.slice(0,40))+'</td><td class="n">'+amt2(t.amt)+'</td><td>'+esc(CAT[t.cat].name)+'</td></tr>').join('')+'</tbody></table>':'<p class="empty" style="padding:8px 10px">Ingen rader kunne leses med disse kolonnene.</p>';
+  const R=state.rules;
+  $('#rulesSum').textContent='Egne regler ('+R.length+')';
+  $('#rules').innerHTML=R.length?R.map((r,i)=>'<li><span>Inneholder <code>'+esc(r.kw)+'</code> → '+esc(CAT[r.cat]?CAT[r.cat].name:r.cat)+'</span><button type="button" class="linkbtn" data-i="'+i+'">Fjern</button></li>').join('')+(Object.keys(state.overrides).length?'<li><span>'+Object.keys(state.overrides).length+' enkelttransaksjoner er flyttet for hånd</span><button type="button" class="linkbtn" id="clrOv">Fjern</button></li>':''):(Object.keys(state.overrides).length?'<li><span>'+Object.keys(state.overrides).length+' enkelttransaksjoner er flyttet for hånd</span><button type="button" class="linkbtn" id="clrOv">Fjern</button></li>':'<li><span>Ingen ennå. Trykk på kategorien til en transaksjon for å flytte den, så kan du lage en regel for alle like kjøp.</span></li>');
+  document.querySelectorAll('#rules .linkbtn[data-i]').forEach(el=>el.onclick=()=>{state.rules.splice(+el.dataset.i,1);LS.set('hgp.rules',state.rules);recategorize();toast('Regelen er fjernet');});
+  const co=$('#clrOv'); if(co)co.onclick=()=>{state.overrides={};LS.set('hgp.overrides',{});recategorize();toast('Enkeltflyttinger er fjernet');};
+}
+function onMapChange(){
+  const m=state.map;
+  m.mode=$('#modeSplit').checked?'split':'single';
+  m.date=+$('#mapDate').value; m.text=+$('#mapText').value; m.amount=+$('#mapAmt').value; m.out=+$('#mapOut').value; m.inn=+$('#mapIn').value; m.flip=$('#mapFlip').checked;
+  m.serial=true;
+  state.period=null; state.shown=30;
+  rebuild();
+  if(!state.txs.length){state.error='Ingen rader kunne leses med disse kolonnene. Prøv en annen dato- eller beløpskolonne.';render();}
+}
+['#mapDate','#mapText','#mapAmt','#mapOut','#mapIn','#mapFlip','#modeSingle','#modeSplit'].forEach(id=>$(id).addEventListener('change',onMapChange));
+
+/* Flytte kategori */
+let sheetTx=null, sheetCat=null;
+function countKw(kw){ kw=norm(kw); if(!kw)return 0; return state.txs.filter(t=>t.mtext.includes(kw)).length; }
+function openSheet(tx){
+  sheetTx=tx; sheetCat=tx.cat;
+  $('#sheetTitle').textContent=tx.merchant;
+  $('#sheetRaw').textContent=dShort(tx.d)+'.'+tx.d.getFullYear()+' · '+tx.text;
+  $('#sheetAmt').textContent=amt2(tx.amt)+' kr';
+  $('#allKw').value=tx.mkey||'';
+  $('#allChk').checked=true;
+  drawOpts(); updCnt();
+  $('#backdrop').hidden=false; $('#sheet').hidden=false;
+  setTimeout(()=>{const on=$('#opts .opt.on');(on||$('#opts .opt')).focus();},30);
+}
+function drawOpts(){
+  $('#opts').innerHTML=CATS.map(c=>'<button type="button" class="opt'+(c.id===sheetCat?' on':'')+'" data-c="'+c.id+'" aria-pressed="'+(c.id===sheetCat)+'">'+esc(c.name)+'</button>').join('');
+  document.querySelectorAll('#opts .opt').forEach(el=>el.onclick=()=>{sheetCat=el.dataset.c;drawOpts();const n=$('#opts .opt.on');if(n)n.focus();});
+}
+function updCnt(){ const on=$('#allChk').checked; $('#allKw').disabled=!on; const n=countKw($('#allKw').value); $('#allCnt').textContent=on?(n?'Gjelder '+n+' transaksjoner i filen, og nye filer du laster inn senere.':'Ingen transaksjoner inneholder denne teksten.'):'Bare denne ene transaksjonen flyttes.'; }
+$('#allKw').addEventListener('input',updCnt); $('#allChk').addEventListener('change',updCnt);
+function closeSheet(){ $('#backdrop').hidden=true; $('#sheet').hidden=true; sheetTx=null; }
+$('#sheetCancel').onclick=closeSheet; $('#backdrop').onclick=closeSheet;
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#sheet').hidden)closeSheet();});
+$('#sheetSave').onclick=()=>{
+  if(!sheetTx)return;
+  const name=CAT[sheetCat].name;
+  if($('#allChk').checked&&norm($('#allKw').value)){
+    const kw=norm($('#allKw').value);
+    state.rules=state.rules.filter(r=>r.kw!==kw); state.rules.push({kw,cat:sheetCat}); LS.set('hgp.rules',state.rules);
+    for(const t of state.txs)if(t.mtext.includes(kw))delete state.overrides[t.key];
+    LS.set('hgp.overrides',state.overrides);
+    const n=countKw(kw); closeSheet(); recategorize(); toast(n+' transaksjoner flyttet til '+name);
+  } else {
+    state.overrides[sheetTx.key]=sheetCat; LS.set('hgp.overrides',state.overrides);
+    closeSheet(); recategorize(); toast('Flyttet til '+name);
+  }
+};
+let toastT=null;
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.hidden=false; clearTimeout(toastT); toastT=setTimeout(()=>t.hidden=true,2600); }
+
+/* Søk og mer */
+let qT=null;
+$('#q').addEventListener('input',e=>{clearTimeout(qT);qT=setTimeout(()=>{state.q=e.target.value;state.shown=30;renderTxs(agg());},120);});
+$('#more').onclick=()=>{state.shown+=100;renderTxs(agg());};
+
+/* Innlasting */
+let xlsxP=null;
+function loadXLSX(){ if(window.XLSX)return Promise.resolve(); if(!xlsxP)xlsxP=new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';s.onload=res;s.onerror=()=>{xlsxP=null;rej(new Error('Excel-leseren kunne ikke lastes. Sjekk nettforbindelsen, eller lagre filen som CSV og prøv igjen.'));};document.head.appendChild(s);}); return xlsxP; }
+async function handleFile(file){
+  if(!file)return;
+  try{
+    const name=file.name||'fil'; let rows;
+    if(/\.(xlsx|xlsm|xls|ods)$/i.test(name)){
+      toast('Leser Excel-filen …');
+      await loadXLSX();
+      const wb=XLSX.read(await file.arrayBuffer(),{type:'array'});
+      let best=null; for(const sn of wb.SheetNames){ const r=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,raw:true,defval:''}); if(!best||r.length>best.length)best=r; }
+      rows=(best||[]).filter(r=>r.some(x=>String(x).trim()!==''));
+    } else {
+      rows=parseCSV(decodeBuf(await file.arrayBuffer()));
+    }
+    if(!rows.length)throw new Error('Filen ser ut til å være tom.');
+    loadRows(rows,name,false);
+    if(state.txs.length)toast(NF0.format(state.txs.length)+' transaksjoner lest inn');
+  }catch(err){ state.error=(err&&err.message)||'Filen kunne ikke leses.'; render(); }
+}
+$('#file').addEventListener('change',e=>{handleFile(e.target.files[0]);e.target.value='';});
+$('#sampleBtn').onclick=()=>loadSample();
+let dragN=0;
+document.addEventListener('dragenter',e=>{if(e.dataTransfer&&[...e.dataTransfer.types].includes('Files')){dragN++;$('#drop').hidden=false;}});
+document.addEventListener('dragleave',()=>{dragN=Math.max(0,dragN-1);if(!dragN)$('#drop').hidden=true;});
+document.addEventListener('dragover',e=>e.preventDefault());
+document.addEventListener('drop',e=>{e.preventDefault();dragN=0;$('#drop').hidden=true;const f=e.dataTransfer&&e.dataTransfer.files[0];if(f)handleFile(f);});
+
+/* Eksempeldata: tre måneder, DNB-lignende eksport */
+function sampleCSV(){
+  let seed=917;
+  const rnd=()=>{seed=(seed+0x6D2B79F5)|0;let t=Math.imul(seed^(seed>>>15),1|seed);t=(t+Math.imul(t^(t>>>7),61|t))^t;return((t^(t>>>14))>>>0)/4294967296;};
+  const R=(a,b)=>Math.round((a+rnd()*(b-a))*100)/100, I=(a,b)=>Math.floor(a+rnd()*(b-a+1)), pick=a=>a[Math.floor(rnd()*a.length)];
+  const rows=[]; const add=(m,d,text,amt)=>rows.push({dt:new Date(2026,m-1,d,12),text,amt});
+  const visa=(m,d,amt,merch)=>'*4821 '+pad(d)+'.'+pad(m)+' NOK '+amt.toFixed(2)+' '+merch+' Kurs: 1.0000';
+  const card=(m,d,merch,a,b)=>{const v=R(a,b);add(m,d,rnd()<.55?visa(m,d,v,merch):'Varekjøp '+merch+' betal dato 2026-'+pad(m)+'-'+pad(d),-v);};
+  const groc=[['REMA 1000 MAJORSTUA',110,760],['KIWI 512 SAGENE',85,640],['COOP EXTRA SANDAKER',140,920],['MENY ULLEVÅL',180,1150],['JOKER BISLETT',45,230]];
+  for(const m of [7,8,9]){
+    const last=new Date(2026,m,0).getDate();
+    add(m,1,'Nettbank til: Husleie Lia Eiendom AS',-12400);
+    add(m,3,'Avtalegiro Tibber Norge AS',-{7:548.2,8:612.9,9:739.4}[m]);
+    add(m,5,'Avtalegiro Gjensidige Forsikring',-1189);
+    add(m,8,'Efaktura Telenor Norge AS',-449);
+    add(m,8,'Efaktura Altibox AS',-699);
+    add(m,10,visa(m,10,179,'NETFLIX.COM'),-179);
+    add(m,11,visa(m,11,139,'Spotify P2F3A1C'),-139);
+    add(m,12,'Avtalegiro SATS Norway AS',-549);
+    add(m,14,visa(m,14,39,'APPLE.COM/BILL'),-39);
+    add(m,15,visa(m,15,976,'RUTER AS 30-DAGERS'),-976);
+    add(m,20,'Overføring til BSU 1503.11.22334',-2291);
+    add(m,20,'Overføring mellom egne konti Sparekonto',-3000);
+    add(m,25,'Lønn Elektro Automasjon AS',38450);
+    add(m,28,'Nordnet Bank Månedsspar fond',-1000);
+    add(m,I(2,6),'Fjellinjen AS Bompenger',-R(380,460));
+    const ng=I(12,15); for(let i=0;i<ng;i++){const g=pick(groc);card(m,I(1,last),g[0],g[1],g[2]);}
+    for(let i=0;i<2;i++)add(m,I(1,last),visa(m,I(1,28),R(890,1580),'ODA.COM'),0);
+    for(let i=0;i<2;i++)card(m,I(1,last),'VINMONOPOLET STORO',260,640);
+    for(let i=0;i<3;i++){const d=I(1,last);add(m,d,'Vipps*Foodora AS',-R(279,429));}
+    for(let i=0;i<2;i++){const d=I(1,last);add(m,d,'Vipps*Wolt Norway AS',-R(240,380));}
+    for(let i=0;i<5;i++)card(m,I(1,last),'ESPRESSO HOUSE MAJORSTUEN',59,124);
+    card(m,I(1,last),'PEPPES PIZZA SOLLI',520,780);
+    card(m,I(1,last),'BAR BOCA GRÜNERLØKKA',180,460);
+    card(m,I(1,last),'NARVESEN OSLO S',39,119);
+    for(let i=0;i<2;i++)card(m,I(1,last),'CIRCLE K ULLEVÅL',640,890);
+    for(let i=0;i<3;i++)add(m,I(1,last),'EasyPark Norge AS',-R(29,96));
+    card(m,I(1,last),'APOTEK 1 STORO',119,289);
+    card(m,I(1,last),'CUTTERS STORO',439,439);
+    for(let i=0;i<3;i++)card(m,I(1,last),'BAKERIET I LILLEGATA',58,142);
+    add(m,I(1,last),'Vipps *Kari Hansen',-pick([150,250,400]));
+    add(m,I(1,last),'Vipps *Ola Berg',-pick([120,180,300]));
+    if(rnd()<.8)add(m,I(1,last),'Vipps *Kari Hansen',pick([150,250]));
+  }
+  rows.forEach(r=>{ if(r.amt===0){ const v=R(890,1580); r.amt=-v; r.text=r.text.replace(/NOK [\d.]+/,'NOK '+v.toFixed(2)); }});
+  add(7,2,visa(7,2,2340,'NORWEGIAN AIR SHUTTLE'),-2340);
+  add(7,9,'Varekjøp FJORD LINE AS',-1340);
+  add(7,10,visa(7,10,1890,'SCANDIC ØRNEN BERGEN'),-1890);
+  add(7,11,visa(7,11,784,'BRYGGEN TRACTEURSTED'),-784);
+  add(7,18,visa(7,18,260,'NORDISK FILM KINO'),-260);
+  add(7,22,'Minibank DNB Storo',-500);
+  add(8,6,visa(8,6,449,'HM NO0127 STORO'),-449);
+  add(8,14,visa(8,14,2450,'IKEA FURUSET'),-2450);
+  add(8,20,'Skatteetaten skatteoppgjør 2025',3412);
+  add(8,22,visa(8,22,1299,'ZALANDO SE'),-1299);
+  add(8,27,visa(8,27,312.4,'TEMU.COM'),-312.4);
+  add(8,29,'Varekjøp HØYDEPUNKT AS',-649);
+  add(9,2,'ZALANDO SE retur',699);
+  add(9,4,visa(9,4,1990,'ELKJØP STORO'),-1990);
+  add(9,9,visa(9,9,899,'XXL STORO'),-899);
+  add(9,12,visa(9,12,189,'CLAS OHLSON STORO'),-189);
+  add(9,16,visa(9,16,1150,'TICKETMASTER NORWAY'),-1150);
+  add(9,19,visa(9,19,199,'STEAMPOWERED.COM'),-199);
+  add(9,21,'Varekjøp TANGEN GÅRDSBUTIKK',-215);
+  add(9,24,'Årsavgift Visa Debet',-300);
+  add(9,26,visa(9,26,129,'NILLE STORO'),-129);
+  rows.sort((a,b)=>b.dt-a.dt);
+  const f=v=>v.toFixed(2).replace('.',',');
+  const ds=d=>pad(d.getDate())+'.'+pad(d.getMonth()+1)+'.'+d.getFullYear();
+  return '"Dato";"Forklaring";"Rentedato";"Ut fra konto";"Inn på konto"\n'+rows.map(r=>{const rd=new Date(r.dt);rd.setDate(rd.getDate()+(r.amt<0?1:0));return '"'+ds(r.dt)+'";"'+r.text.replace(/"/g,'""')+'";"'+ds(rd)+'";"'+(r.amt<0?f(-r.amt):'')+'";"'+(r.amt>0?f(r.amt):'')+'"';}).join('\n');
+}
+function loadSample(){ loadRows(parseCSV(sampleCSV()),'eksempel.csv',true); }
+loadSample();
+/* App: frakoblet bruk og installasjon */
+if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol)){
+  window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{});});
+}
+let installEvt=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEvt=e;$('#installBtn').hidden=false;});
+$('#installBtn').onclick=async()=>{ if(!installEvt)return; installEvt.prompt(); try{await installEvt.userChoice;}catch(e){} installEvt=null; $('#installBtn').hidden=true; };
+window.addEventListener('appinstalled',()=>{$('#installBtn').hidden=true;toast('Appen er installert');});
+</script>
+</body>
+</html>

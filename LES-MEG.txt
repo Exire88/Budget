@@ -1,0 +1,64 @@
+HVOR GIKK PENGENE? – SLIK FÅR DU APPEN PÅ TELEFONEN OG PC-EN
+================================================================
+
+Appen er en såkalt web-app (PWA). Den legges på en nettadresse én gang.
+Etter det installerer du den på telefonen og PC-en med eget ikon, og den
+virker uten nett. Bankfilene dine lastes aldri opp noe sted. De leses bare
+på enheten din.
+
+Filene i mappen inneholder ingen personlige opplysninger, så det er trygt
+å legge dem på en åpen nettside.
+
+
+1. LEGG APPEN PÅ NETT (GRATIS, CA. 5 MINUTTER, BARE ÉN GANG)
+------------------------------------------------------------
+Enklest med GitHub Pages:
+
+  a) Lag en gratis konto på github.com.
+  b) Trykk «+» øverst til høyre og velg «New repository».
+     Kall den for eksempel  pengene , velg «Public» og trykk
+     «Create repository».
+  c) Trykk lenken «uploading an existing file». Dra alle filene fra
+     denne mappen inn i vinduet (filene, ikke selve mappen).
+     Trykk «Commit changes».
+  d) Gå til «Settings», deretter «Pages». Under «Build and deployment»
+     velger du «Deploy from a branch», branch «main» og mappen «/ (root)».
+     Trykk «Save».
+  e) Etter et par minutter ligger appen på
+        https://DITTBRUKERNAVN.github.io/pengene/
+
+
+2. INSTALLER APPEN
+------------------
+Åpne adressen fra punkt 1e på enheten:
+
+  iPhone:   Åpne i Safari. Trykk Del-knappen og velg
+            «Legg til på Hjem-skjerm».
+  Android:  Åpne i Chrome. Trykk menyen (tre prikker) og velg
+            «Installer app» eller «Legg til på startsiden».
+  PC:       Åpne i Edge eller Chrome. Trykk «Installer appen» øverst
+            i appen, eller installasjonsikonet i adressefeltet.
+
+Åpne appen én gang mens du er på nett. Da lagres alt på enheten, også
+delen som leser Excel-filer, og appen virker uten nett etterpå.
+
+
+3. BRUK
+-------
+  - Eksporter transaksjonene fra nettbanken som CSV eller Excel.
+  - Trykk «Last inn kontoutskrift» og velg filen.
+  - Trykk på kategorien til et kjøp for å flytte det. Du kan velge at
+    det skal gjelde alle kjøp med samme tekst, også i senere filer.
+  - Egne regler lagres på enheten du bruker.
+
+
+BARE PÅ PC, UTEN Å LEGGE NOE PÅ NETT
+------------------------------------
+Dobbeltklikk på index.html. Appen åpner i nettleseren og fungerer for
+CSV-filer, men du får ikke installasjonsikon, og Excel-filer krever nett.
+
+
+OPPDATERING
+-----------
+Får du en ny versjon av filene, laster du dem opp i samme repository
+på GitHub. Appen henter oppdateringen neste gang den åpnes med nett.
